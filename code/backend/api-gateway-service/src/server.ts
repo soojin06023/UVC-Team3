@@ -2,7 +2,6 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import { carsProxy, CARS_PATHS } from './routes/cars.js';
 import { authProxy, AUTH_PATHS } from './routes/auth.js';
 import { errorHandler } from './middleware/errorHandling.js';
 
@@ -20,8 +19,7 @@ app.get('/health', (_req, res) => {
     service: 'api-gateway-service',
     environment: NODE_ENV,
     upstreams: {
-      carService: process.env.CAR_SERVICE_URL || 'http://localhost:4000',
-      authService: process.env.AUTH_SERVICE_URL || 'http://localhost:4001',
+      authService: process.env.AUTH_SERVICE_URL || 'http://localhost:4000',
     },
   });
 });
@@ -36,10 +34,8 @@ app.use((_req, res) => {
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  const carServiceUrl = process.env.CAR_SERVICE_URL || 'http://localhost:4000';
-  const authUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:4001';
+  const authUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:4000';
   console.log(`API gateway running at http://localhost:${PORT}`);
   console.log(`Environment: ${NODE_ENV}`);
   AUTH_PATHS.forEach((path) => console.log(`→ ${path.padEnd(14)} → ${authUrl} (public)`));
-  CARS_PATHS.forEach((path) => console.log(`→ ${path.padEnd(14)} → ${carServiceUrl} (public)`));
 });
