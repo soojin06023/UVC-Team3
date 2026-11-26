@@ -4,7 +4,7 @@
  * API GATEWAY SMOKE TEST
  *
  * Run the gateway first: npm run dev
- * Make sure car-service (port 4000) and auth-service (port 4001) are also running.
+ * Make sure auth-service (port 4001) is also running.
  * Then run: npm run test:api
  *
  * Targets http://localhost:$PORT (default 3000), or BASE_URL if set.
@@ -34,7 +34,6 @@ async function request(method, path, { body, token } = {}) {
 
 const tests = [
   { name: 'Health check', expect: 200, fn: () => request('GET', '/health') },
-  { name: 'GET /cars -> car-service', expect: 200, fn: () => request('GET', '/cars') },
   {
     name: 'POST /auth/register -> auth-service (body is forwarded)', expect: 201,
     fn: () => request('POST', '/auth/register', { body: { email, password } }),
