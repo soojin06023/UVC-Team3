@@ -10,7 +10,7 @@ export const authProxy = createProxyMiddleware({
   changeOrigin: true,
   pathFilter: (path) => AUTH_PATHS.some((prefix) => path.startsWith(prefix)),
   on: {
-    // Same fix as cars.ts: express.json() already drained the request
+    // express.json() already drained the request
     // stream by the time this proxy runs, so POST bodies (register/login)
     // must be re-serialized onto the proxied request.
     proxyReq: fixRequestBody,

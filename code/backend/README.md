@@ -1,14 +1,13 @@
-# car-auction-starter
+# UVC-Team3 backend
 
-Starter monorepo for a car auction platform, made up of independent microservices.
+The backend of the control tower, made up of independent microservices.
 
 ## Services
 
 | Service | Port | Description |
 | --- | --- | --- |
-| [car-service](car-service/) | 4000 | Express + Prisma/SQLite API. Exposes `GET /cars`, listing cars from a `Car` table. See [car-service/README.md](car-service/README.md). |
 | [auth-service](auth-service/) | 4001 | JWT auth API — register/login/me. See [auth-service/README.md](auth-service/README.md). |
-| [api-gateway-service](api-gateway-service/) | 3000 | Proxies `/cars` to `car-service` and `/auth` to `auth-service`. See [api-gateway-service/README.md](api-gateway-service/README.md). |
+| [api-gateway-service](api-gateway-service/) | 3000 | Proxies `/auth` to `auth-service`. See [api-gateway-service/README.md](api-gateway-service/README.md). |
 
 Every service follows the same setup, and is self-contained so it can be taken out of this repo on its own:
 
@@ -27,21 +26,13 @@ The repository root only holds this README and the `docker-compose.yml` that run
 docker compose up --build
 ```
 
-The gateway is then available at `http://localhost:3000` — try `GET /cars` or `POST /auth/register`. Databases live in named Docker volumes; `docker compose down -v` removes them. On every start (`SEED_DATABASE` in `docker-compose.yml`), `car-service` is reset to the sample cars and `auth-service` creates the demo users below.
+The gateway is then available at `http://localhost:3000` — try `GET /health` or `POST /auth/register`. Databases live in named Docker volumes; `docker compose down -v` removes them. On every start (`SEED_DATABASE` in `docker-compose.yml`), `auth-service` creates the demo users below.
 
 ### Locally with npm
 
 Run each service in its own terminal:
 
 ```bash
-# car-service (port 4000)
-cd car-service
-cp .env.example .env
-npm install            # also generates the Prisma client
-npm run prisma:migrate
-npm run prisma:seed
-npm run dev
-
 # auth-service (port 4001)
 cd auth-service
 cp .env.example .env
