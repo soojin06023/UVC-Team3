@@ -1,8 +1,8 @@
 # auth-service
 
-A JWT-based authentication microservice — registration, login, and token verification. Built on Node.js, Express, Prisma 7, and TypeScript with a SQLite database. It doesn't hold any domain data (cars, auctions, bids); it only knows about `User` accounts and issuing/verifying JWTs.
+A JWT-based authentication microservice — registration, login, and token verification. Built on Node.js, Express, Prisma 7, and TypeScript with a SQLite database. It doesn't hold any domain data; it only knows about `User` accounts and issuing/verifying JWTs.
 
-> Part of the car-auction-starter. Clients reach this service through the [api-gateway-service](../api-gateway-service), which proxies `/auth/*` here. The service is self-contained and also runs on its own.
+> Part of the UVC-Team3 backend. Clients reach this service through the [api-gateway-service](../api-gateway-service), which proxies `/auth/*` here. The service is self-contained and also runs on its own.
 
 ## Quick Start
 
@@ -229,7 +229,7 @@ In Docker, `SEED_DATABASE=true` additionally creates the demo users on start (se
 - **typescript** — TypeScript compiler
 - **tsx** — TypeScript/ESM runner with watch mode, used for `npm run dev`
 
-This service uses native ESM (`"type": "module"` + `moduleResolution: NodeNext`), like every service in the car-auction-starter. That's why it uses `tsx` for hot reload instead of `ts-node-dev` (which doesn't reliably support ESM).
+This service uses native ESM (`"type": "module"` + `moduleResolution: NodeNext`), like every service in this backend. That's why it uses `tsx` for hot reload instead of `ts-node-dev` (which doesn't reliably support ESM).
 
 ---
 

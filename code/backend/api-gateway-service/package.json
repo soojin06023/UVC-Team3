@@ -1,7 +1,7 @@
 {
   "name": "api-gateway-service",
   "version": "1.0.0",
-  "description": "API gateway – single entry point routing to car-service and auth-service",
+  "description": "API gateway – single entry point routing to the backend services",
   "type": "module",
   "main": "dist/server.js",
   "scripts": {

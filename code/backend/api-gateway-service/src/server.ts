@@ -1,4 +1,4 @@
-// Load .env before the route modules are evaluated: they read CAR_SERVICE_URL/AUTH_SERVICE_URL at import time
+// Load .env before the route modules are evaluated: they read AUTH_SERVICE_URL at import time
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -19,13 +19,12 @@ app.get('/health', (_req, res) => {
     service: 'api-gateway-service',
     environment: NODE_ENV,
     upstreams: {
-      authService: process.env.AUTH_SERVICE_URL || 'http://localhost:4000',
+      authService: process.env.AUTH_SERVICE_URL || 'http://localhost:4001',
     },
   });
 });
 
 app.use(authProxy);
-app.use(carsProxy);
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found' });
@@ -34,7 +33,7 @@ app.use((_req, res) => {
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  const authUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:4000';
+  const authUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:4001';
   console.log(`API gateway running at http://localhost:${PORT}`);
   console.log(`Environment: ${NODE_ENV}`);
   AUTH_PATHS.forEach((path) => console.log(`→ ${path.padEnd(14)} → ${authUrl} (public)`));

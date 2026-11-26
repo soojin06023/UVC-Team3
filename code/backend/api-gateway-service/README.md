@@ -2,7 +2,7 @@
 
 A single entry point that proxies incoming HTTP traffic to the backend services in this repo. It does not hold any data or state of its own — it's a thin routing layer built on Express and [http-proxy-middleware](https://github.com/chimurai/http-proxy-middleware).
 
-> Part of the car-auction-starter. The service is self-contained: it only needs the URLs of the services it proxies to.
+> Part of the UVC-Team3 backend. The service is self-contained: it only needs the URLs of the services it proxies to.
 
 ## Quick Start
 
@@ -10,7 +10,6 @@ A single entry point that proxies incoming HTTP traffic to the backend services 
 
 - Node.js 24 (current LTS)
 - npm
-- `car-service` running locally (see `../car-service/README.md`)
 - `auth-service` running locally (see `../auth-service/README.md`) — required for `/auth`
 
 ### Installation
@@ -34,23 +33,22 @@ npm start
 
 ### Docker
 
-The `Dockerfile` is a multi-stage build on `node:24-bookworm-slim` (the same base as `car-service` and `auth-service`); the final image only contains the compiled `dist/` and production `node_modules`. `.env` is excluded from the image (see `.dockerignore`), so pass it in at runtime:
+The `Dockerfile` is a multi-stage build on `node:24-bookworm-slim` (the same base as `auth-service`); the final image only contains the compiled `dist/` and production `node_modules`. `.env` is excluded from the image (see `.dockerignore`), so pass it in at runtime:
 
 ```bash
 docker build -t api-gateway-service .
 docker run -p 3000:3000 --env-file .env api-gateway-service
 ```
 
-Inside a container, `localhost` refers to the container itself, not your machine. If `car-service` and `auth-service` run on your host, override the upstream URLs with `host.docker.internal`:
+Inside a container, `localhost` refers to the container itself, not your machine. If `auth-service` runs on your host, override the upstream URL with `host.docker.internal`:
 
 ```bash
 docker run -p 3000:3000 --env-file .env \
-  -e CAR_SERVICE_URL=http://host.docker.internal:4000 \
   -e AUTH_SERVICE_URL=http://host.docker.internal:4001 \
   api-gateway-service
 ```
 
-To run the gateway together with both services, use the `docker-compose.yml` in the repository root instead.
+To run the gateway together with the services, use the `docker-compose.yml` in the repository root instead.
 
 ---
 
@@ -62,8 +60,7 @@ src/
 ├── middleware/
 │   └── errorHandling.ts    # asyncHandler wrapper + central error handler
 ├── routes/
-│   ├── auth.ts             # /auth → auth-service
-│   └── cars.ts             # /cars → car-service
+│   └── auth.ts             # /auth → auth-service
 └── validation/
     └── schemas.ts          # Placeholder for gateway-level request validation
 
@@ -74,7 +71,7 @@ Dockerfile                  # Multi-stage Debian-slim build for the production i
 test-api.js                 # Smoke test through the gateway (npm run test:api)
 ```
 
-This service uses native ESM, so relative imports end in `.js` (TypeScript resolves `./routes/cars.js` to `cars.ts`).
+This service uses native ESM, so relative imports end in `.js` (TypeScript resolves `./routes/auth.js` to `auth.ts`).
 
 ---
 
@@ -83,16 +80,15 @@ This service uses native ESM, so relative imports end in `.js` (TypeScript resol
 | Path | Proxied to | Auth required |
 | --- | --- | --- |
 | `/auth` | `auth-service` (`AUTH_SERVICE_URL`) | No — must stay reachable so anyone can register/log in |
-| `/cars` | `car-service` (`CAR_SERVICE_URL`) | No |
 | `/health` | handled locally, reports gateway status and configured upstreams | No |
 
 Requests to any other path receive a `404`.
 
 This is a pass-through proxy — it doesn't re-implement each route, it just forwards matching paths (any method) to the upstream service and streams back its response, including error responses. Each upstream service is the source of truth for its own request validation and business logic.
 
-Because `express.json()` runs before the proxy (so `/health` and other local routes can read a JSON body), request bodies are already parsed by the time they reach the proxy. The proxy re-serializes them via `http-proxy-middleware`'s `fixRequestBody` (wired into `on.proxyReq`) — without it, write requests forwarded through the gateway would hang waiting for a body that was already consumed. Both `src/routes/cars.ts` and `src/routes/auth.ts` need this.
+Because `express.json()` runs before the proxy (so `/health` and other local routes can read a JSON body), request bodies are already parsed by the time they reach the proxy. The proxy re-serializes them via `http-proxy-middleware`'s `fixRequestBody` (wired into `on.proxyReq`) — without it, write requests forwarded through the gateway would hang waiting for a body that was already consumed. Every proxy in `src/routes/` needs this.
 
-See `src/routes/cars.ts` / `src/routes/auth.ts` for the proxy definitions and `src/server.ts` for how they're mounted.
+See `src/routes/auth.ts` for the proxy definition and `src/server.ts` for how they're mounted.
 
 ---
 
@@ -100,7 +96,7 @@ See `src/routes/cars.ts` / `src/routes/auth.ts` for the proxy definitions and `s
 
 `auth-service` issues and verifies JWTs (`POST /auth/register`, `POST /auth/login`, `GET /auth/me`) — the gateway just proxies `/auth` through to it without checking anything itself.
 
-There is currently no gateway-enforced auth on any route: `/cars` carries no personal data, so there's nothing to gate. If a future route needs protection, the gateway would verify the token locally (holding the same `JWT_SECRET` as `auth-service`) rather than calling back to `auth-service` on every request — no network call, no hard runtime dependency on `auth-service` being up. Add an `authenticate` middleware for that when `/cars` or a new route needs protection.
+There is currently no gateway-enforced auth on any route. If a future route needs protection, the gateway would verify the token locally (holding the same `JWT_SECRET` as `auth-service`) rather than calling back to `auth-service` on every request — no network call, no hard runtime dependency on `auth-service` being up. Add an `authenticate` middleware for that when a new route needs protection.
 
 ---
 
@@ -120,7 +116,6 @@ PORT=3000
 NODE_ENV=development
 
 # Downstream services
-CAR_SERVICE_URL=http://localhost:4000
 AUTH_SERVICE_URL=http://localhost:4001
 ```
 
@@ -128,7 +123,6 @@ AUTH_SERVICE_URL=http://localhost:4001
 | --- | --- | --- |
 | `PORT` | Port the gateway listens on | `3000` |
 | `NODE_ENV` | Runtime environment | `development` |
-| `CAR_SERVICE_URL` | Base URL of `car-service` | `http://localhost:4000` |
 | `AUTH_SERVICE_URL` | Base URL of `auth-service` | `http://localhost:4001` |
 
 When you add a new variable, add it to `.env.example` too (with a safe placeholder value, never a real secret) so others know it exists.
@@ -149,7 +143,7 @@ When you add a new variable, add it to `.env.example` too (with a safe placehold
 - **typescript** — TypeScript compiler
 - **tsx** — TypeScript/ESM runner with watch mode, used for `npm run dev`
 
-This service uses native ESM (`"type": "module"` + `moduleResolution: NodeNext`), like every service in the car-auction-starter.
+This service uses native ESM (`"type": "module"` + `moduleResolution: NodeNext`), like every service in this backend.
 
 ---
 
@@ -160,7 +154,7 @@ npm run dev           # Start dev server with hot reload (tsx watch)
 npm run build         # Compile TypeScript
 npm start             # Run compiled build
 npm run type-check    # TypeScript check without building
-npm run test:api      # Smoke-test the gateway (car-service and auth-service must be running)
+npm run test:api      # Smoke-test the gateway (auth-service must be running)
 ```
 
 ---

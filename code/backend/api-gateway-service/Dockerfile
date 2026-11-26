@@ -1,4 +1,4 @@
-# Same base image as car-service and auth-service (Debian/glibc, Node 24 LTS)
+# Same base image as auth-service (Debian/glibc, Node 24 LTS)
 FROM node:24-bookworm-slim AS build
 
 WORKDIR /app
