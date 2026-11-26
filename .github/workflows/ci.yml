@@ -1,0 +1,69 @@
+# CI pipeline for UVC-Team3
+# Runs on every push (any branch) and on every pull request into dev or main.
+# Each folder in code/backend/ with a package.json is treated as a service and
+# gets its own job, so a new service is picked up without editing this file.
+ 
+name: CI
+ 
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [dev, main]
+ 
+jobs:
+  # Step 1: find the services
+  find-services:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.list.outputs.services }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: list
+        name: List service folders
+        run: |
+          services=$(find code/backend -mindepth 2 -maxdepth 2 -name package.json -printf '%h\n' \
+            | xargs -r -n1 basename | sort | jq -R . | jq -cs .)
+          echo "Found services: $services"
+          echo "services=$services" >> "$GITHUB_OUTPUT"
+ 
+  # Step 2: install, check, test and build every service
+  build:
+    needs: find-services
+    if: needs.find-services.outputs.services != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false          # one broken service doesn't hide the others' results
+      matrix:
+        service: ${{ fromJson(needs.find-services.outputs.services) }}
+    name: ${{ matrix.service }}
+    defaults:
+      run:
+        working-directory: code/backend/${{ matrix.service }}
+    env:
+      # Prisma services need this at install time (postinstall runs prisma generate)
+      DATABASE_URL: file:./data/ci.sqlite
+    steps:
+      - uses: actions/checkout@v4
+ 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: code/backend/${{ matrix.service }}/package-lock.json
+ 
+      - name: Install dependencies
+        run: npm ci
+ 
+      - name: Type-check
+        run: npm run type-check
+ 
+      - name: Lint
+        run: npm run lint --if-present
+ 
+      - name: Unit tests
+        run: npm run test --if-present
+ 
+      - name: Build
+        run: npm run build
+ 
