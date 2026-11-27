@@ -245,8 +245,20 @@ npm run prisma:seed      # Create/reset the demo users
 npm run prisma:generate  # Regenerate Prisma client after schema changes
 npm run prisma:studio    # Open Prisma Studio GUI
 npm run type-check       # TypeScript check without building
+npm test                 # Run the unit tests once (Vitest)
+npm run test:watch       # Re-run unit tests on every file save
 npm run test:api         # Smoke-test the API against a running server
 ```
+
+## Unit tests
+
+Unit tests live in `tests/` next to `src/` and use [Vitest](https://vitest.dev). They test one piece at a time (validation rules, the `authenticate` middleware) and need no database or running server.
+
+- **Terminal:** `npm test`
+- **VS Code:** install the "Vitest" extension (publisher: vitest.dev), open the Testing panel (flask icon in the sidebar) and press ▶ to run all tests, or click the ▶ next to a single test in the editor.
+- **CI:** the GitHub Actions pipeline runs `npm test` on every push and pull request; a failing test turns the build red.
+
+To add a test, create `tests/<name>.test.ts` and import the code under test from `../src/...js`.
 
 ---
 
